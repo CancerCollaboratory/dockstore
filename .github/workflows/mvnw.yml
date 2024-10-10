@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java }}
-          distribution: 'adopt'
+          distribution: 'temurin'
 
       - if: "!contains(github.ref, 'dependabot')"
         name: Initialize CodeQL
