@@ -53,7 +53,7 @@ POM as their parent.
 
         <dropwizard.version>4.0.2</dropwizard.version>
         <dropwizard-annotations.version>4.2.19</dropwizard-annotations.version>
-        <elasticsearch-version>7.10.2</elasticsearch-version>
+        <elasticsearch-version>7.17.23</elasticsearch-version>
         <swagger-annotations-version>1.6.8</swagger-annotations-version>
         <openapi-annotations-version>2.2.15</openapi-annotations-version>
         <assertj.version>3.14.0</assertj.version>
