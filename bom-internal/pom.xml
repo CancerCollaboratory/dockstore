@@ -60,7 +60,7 @@ POM as their parent.
         <junit-version>4.13.2</junit-version>
         <junit5-version>5.9.1</junit5-version>
         <hoverfly-version>0.14.0</hoverfly-version>
-        <logback.version>1.4.14</logback.version>
+        <logback.version>1.5.13</logback.version>
         <aws.version>2.28.7</aws.version>
         <powermock.version>2.0.9</powermock.version>
         <postgresql.version>42.7.2</postgresql.version>
