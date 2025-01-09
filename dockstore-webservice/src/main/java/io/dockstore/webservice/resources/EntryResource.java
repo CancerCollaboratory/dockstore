@@ -27,6 +27,9 @@ import io.dockstore.webservice.api.SyncStatus;
 import io.dockstore.webservice.core.Category;
 import io.dockstore.webservice.core.CollectionOrganization;
 import io.dockstore.webservice.core.DescriptionMetrics;
+import io.dockstore.webservice.core.Doi;
+import io.dockstore.webservice.core.Doi.DoiInitiator;
+import io.dockstore.webservice.core.Doi.DoiType;
 import io.dockstore.webservice.core.Entry;
 import io.dockstore.webservice.core.LambdaEvent;
 import io.dockstore.webservice.core.OrcidPutCode;
@@ -44,6 +47,8 @@ import io.dockstore.webservice.helpers.ORCIDHelper;
 import io.dockstore.webservice.helpers.PublicStateManager;
 import io.dockstore.webservice.helpers.StateManagerMode;
 import io.dockstore.webservice.helpers.TransactionHelper;
+import io.dockstore.webservice.helpers.doi.DoiHelper;
+import io.dockstore.webservice.jdbi.DoiDAO;
 import io.dockstore.webservice.jdbi.EntryDAO;
 import io.dockstore.webservice.jdbi.EventDAO;
 import io.dockstore.webservice.jdbi.LambdaEventDAO;
@@ -137,6 +142,7 @@ public class EntryResource implements AuthenticatedResourceInterface, AliasableR
     private final UserDAO userDAO;
     private final EventDAO eventDAO;
     private final LambdaEventDAO lambdaEventDAO;
+    private final DoiDAO doiDAO;
     private final CollectionHelper collectionHelper;
     private final TopicsApi topicsApi;
     private final String discourseKey;
@@ -228,6 +234,7 @@ public class EntryResource implements AuthenticatedResourceInterface, AliasableR
         this.tokenDAO = tokenDAO;
         this.userDAO = userDAO;
         this.lambdaEventDAO = new LambdaEventDAO(sessionFactory);
+        this.doiDAO = new DoiDAO(sessionFactory);
         this.collectionHelper = new CollectionHelper(sessionFactory, toolDAO, versionDAO);
         discourseUrl = configuration.getDiscourseUrl();
         discourseKey = configuration.getDiscourseKey();
@@ -452,6 +459,48 @@ public class EntryResource implements AuthenticatedResourceInterface, AliasableR
         final String description = version.getVersionMetadata().getDescription();
 
         return new DescriptionMetrics(description);
+    }
+
+    @POST
+    @UnitOfWork
+    @Path("/{entryId}/versions/{versionId}/generateCustomDoi")
+    @Operation(operationId = "generateCustomDoi", description = "Generate a custom DOI for the specific version", security = @SecurityRequirement(name = JWT_SECURITY_DEFINITION_NAME))
+    @ApiResponse(responseCode = HttpStatus.SC_OK + "", description = "Successfully created custom DOI", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Doi.class)))
+    public Doi generateCustomDoi(@Parameter(hidden = true, name = "user")@Auth User user,
+        @Parameter(name = "entryId", description = "Entry to generate the DOI for", required = true, in = ParameterIn.PATH) @PathParam("entryId") Long entryId,
+        @Parameter(name = "versionId", description = "Version to generate the DOI for", required = true, in = ParameterIn.PATH) @PathParam("versionId") Long versionId) {
+        Entry<? extends Entry, ? extends Version> entry = toolDAO.getGenericEntryById(entryId);
+        checkNotNullEntry(entry);
+        checkCanWrite(user, entry);
+
+        Version version = versionDAO.findVersionInEntry(entryId, versionId);
+        if (version == null) {
+            throw new CustomWebApplicationException("Version " + versionId + " does not exist for this entry", HttpStatus.SC_NOT_FOUND);
+        }
+
+        // check that entry is published
+        if (!entry.getIsPublished()) {
+            throw new CustomWebApplicationException("Entry must be published", HttpStatus.SC_BAD_REQUEST);
+        }
+        // check that version is not hidden
+        if (version.isHidden()) {
+            throw new CustomWebApplicationException("Version must not be hidden", HttpStatus.SC_BAD_REQUEST);
+        }
+
+        String doiName;
+        try {
+            doiName = DoiHelper.createDoi(entry, version);
+        } catch (RuntimeException e) {
+            LOG.error("Could not create custom DOI", e);
+            throw new CustomWebApplicationException("Could not create custom DOI", HttpStatus.SC_BAD_REQUEST);
+        }
+
+        long doiId = doiDAO.create(new Doi(DoiType.VERSION, DoiInitiator.CUSTOM, doiName));
+        Doi doi = doiDAO.findById(doiId);
+
+        version.getDois().put(doi.getInitiator(), doi);
+
+        return doi;
     }
 
     @POST

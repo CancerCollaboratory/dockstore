@@ -45,8 +45,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 })
 public class Doi {
     // DOI order of precedence from greatest to least
-    public static final List<DoiInitiator> DOI_ORDER_OF_PRECEDENCE = List.of(DoiInitiator.USER, DoiInitiator.GITHUB, DoiInitiator.DOCKSTORE);
-    public static final int MAX_NUMBER_OF_DOI_INITIATORS = 3;
+    public static final List<DoiInitiator> DOI_ORDER_OF_PRECEDENCE = List.of(DoiInitiator.USER, DoiInitiator.GITHUB, DoiInitiator.CUSTOM, DoiInitiator.DOCKSTORE);
+    public static final int MAX_NUMBER_OF_DOI_INITIATORS = 4;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -146,6 +146,7 @@ public class Doi {
     public enum DoiInitiator {
         USER,
         DOCKSTORE,
-        GITHUB
+        GITHUB,
+        CUSTOM
     }
 }

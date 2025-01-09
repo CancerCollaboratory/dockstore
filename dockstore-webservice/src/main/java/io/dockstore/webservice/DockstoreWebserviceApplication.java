@@ -99,6 +99,7 @@ import io.dockstore.webservice.helpers.PersistenceExceptionMapper;
 import io.dockstore.webservice.helpers.PublicStateManager;
 import io.dockstore.webservice.helpers.PublicUserFilter;
 import io.dockstore.webservice.helpers.ZenodoHelper;
+import io.dockstore.webservice.helpers.doi.DoiHelper;
 import io.dockstore.webservice.helpers.statelisteners.PopulateEntryListener;
 import io.dockstore.webservice.jdbi.AppToolDAO;
 import io.dockstore.webservice.jdbi.BioWorkflowDAO;
@@ -518,6 +519,7 @@ public class DockstoreWebserviceApplication extends Application<DockstoreWebserv
         DOIGeneratorFactory.setConfig(configuration);
 
         GoogleHelper.setConfig(configuration);
+        DoiHelper.setConfig(configuration);
 
         if (configuration.getDiagnosticsConfig().getEnabled()) {
             LOG.info("enabling diagnostic logging output");

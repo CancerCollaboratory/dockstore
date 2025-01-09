@@ -17,13 +17,11 @@
 package io.dockstore.webservice.helpers;
 
 import io.dockstore.webservice.DockstoreWebserviceConfiguration;
-import io.dockstore.webservice.core.AppTool;
-import io.dockstore.webservice.core.BioWorkflow;
 import io.dockstore.webservice.core.Collection;
-import io.dockstore.webservice.core.Notebook;
+import io.dockstore.webservice.core.Entry;
 import io.dockstore.webservice.core.Organization;
-import io.dockstore.webservice.core.Service;
 import io.dockstore.webservice.core.Tool;
+import io.dockstore.webservice.core.Version;
 import io.dockstore.webservice.core.Workflow;
 
 public final class MetadataResourceHelper {
@@ -37,17 +35,20 @@ public final class MetadataResourceHelper {
         baseUrl = config.getExternalConfig().computeBaseUrl();
     }
 
-    public static String createWorkflowURL(Workflow workflow) {
-        if (workflow instanceof BioWorkflow) {
-            return baseUrl + "/workflows/" + workflow.getWorkflowPath();
-        } else if (workflow instanceof Notebook) {
-            return baseUrl + "/notebooks/" + workflow.getWorkflowPath();
-        } else if (workflow instanceof Service) {
-            return baseUrl + "/services/" + workflow.getWorkflowPath();
-        } else if (workflow instanceof AppTool) {
-            return baseUrl + "/containers/" + workflow.getWorkflowPath();
-        }
-        throw new UnsupportedOperationException("should be unreachable");
+    public static String createEntryName(Entry<?, ?> entry) {
+        return entry.getEntryPath();
+    }
+
+    public static String createVersionName(Entry<?, ?> entry, Version<?> version) {
+        return createEntryName(entry) + ":" + version.getName();
+    }
+
+    public static String createEntryURL(Entry<?, ?> entry) {
+        return baseUrl + "/" + entry.getEntryTypeMetadata().getSitePath() + "/" + createEntryName(entry);
+    }
+
+    public static String createVersionURL(Entry<?, ?> entry, Version<?> version) {
+        return createEntryURL(entry) + ":" + version.getName();
     }
 
     public static String createOrganizationURL(Organization organization) {
@@ -58,9 +59,11 @@ public final class MetadataResourceHelper {
         return baseUrl + "/organizations/" + organization.getName() + "/collections/"  + collection.getName();
     }
 
-
     public static String createToolURL(Tool tool) {
-        return baseUrl + "/containers/" + tool.getToolPath();
+        return createEntryURL(tool);
     }
 
+    public static String createWorkflowURL(Workflow workflow) {
+        return createEntryURL(workflow);
+    }
 }
