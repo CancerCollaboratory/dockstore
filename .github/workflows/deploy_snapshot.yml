@@ -103,6 +103,9 @@ jobs:
       - name: Copy checksum files
         run: aws s3 cp image-digest.txt  s3://${{ secrets.AWS_BUCKET }}/${{ env.S3_FOLDER }}-${{ steps.slug.outputs.sha7 }}/image-digest.txt
 
+      - name: Copy checksum files (new)
+        run: aws s3 cp image-digest.txt  s3://${{ secrets.AWS_BUCKET }}/${{ env.S3_FOLDER }}-${{ steps.slug.outputs.sha7 }}/dockstore-webservice/image-digest.txt        
+
       # deploy database documentation and also verify that non-confidential migrations seem sane
       - name: Setup Pages
         uses: actions/configure-pages@v5
