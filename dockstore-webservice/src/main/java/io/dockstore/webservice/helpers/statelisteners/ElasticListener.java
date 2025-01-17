@@ -23,6 +23,7 @@ import io.dockstore.webservice.CustomWebApplicationException;
 import io.dockstore.webservice.DockstoreWebserviceConfiguration;
 import io.dockstore.webservice.core.Author;
 import io.dockstore.webservice.core.Category;
+import io.dockstore.webservice.core.Doi;
 import io.dockstore.webservice.core.Entry;
 import io.dockstore.webservice.core.EntryTypeMetadata;
 import io.dockstore.webservice.core.Label;
@@ -334,6 +335,7 @@ public class ElasticListener implements StateListenerInterface {
         List<String> descriptorTypeVersions = getDistinctDescriptorTypeVersions(entry, workflowVersions);
         List<String> engineVersions = getDistinctEngineVersions(workflowVersions);
         Set<Author> allAuthors = getAllAuthors(entry);
+        Doi selectedConceptDoi = getSelectedConceptDoi(entry);
         Entry detachedEntry = detach(entry);
         JsonNode jsonNode = MAPPER.readTree(MAPPER.writeValueAsString(detachedEntry));
         // add number of starred users to allow sorting in the UI
@@ -349,6 +351,7 @@ public class ElasticListener implements StateListenerInterface {
         objectNode.set("all_authors", MAPPER.valueToTree(allAuthors));
         objectNode.set("categories", MAPPER.valueToTree(convertCategories(entry.getCategories())));
         objectNode.put("archived", entry.isArchived());
+        objectNode.put("selected_concept_doi", MAPPER.valueToTree(selectedConceptDoi));
         return jsonNode;
     }
 
@@ -416,6 +419,7 @@ public class ElasticListener implements StateListenerInterface {
     }
 
     private static void copyEntryProperties(Entry detachedEntry, Entry entry) {
+        detachedEntry.setLastModified(entry.getLastModifiedDate());
         detachedEntry.setDescription(entry.getDescription());
         detachedEntry.setAliases(entry.getAliases());
         detachedEntry.setLabels((SortedSet<Label>)entry.getLabels());
@@ -528,6 +532,17 @@ public class ElasticListener implements StateListenerInterface {
             allAuthors.add(new Author());
         }
         return allAuthors;
+    }
+
+    private static Doi getSelectedConceptDoi(Entry<?, ?> entry) {
+        if (!entry.getConceptDois().isEmpty()) {
+            Doi selectedDoi = entry.getConceptDois().get(entry.getDoiSelection());
+            if (selectedDoi == null) {
+                selectedDoi = entry.getDefaultConceptDoi();
+            }
+            return selectedDoi;
+        }
+        return null;
     }
 
 
